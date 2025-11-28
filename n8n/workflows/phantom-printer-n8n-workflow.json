@@ -1,0 +1,200 @@
+{
+  "name": "Phantom Printer - Complete Dropbox Monitor",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dropbox-heartbeat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "heartbeat-webhook",
+      "name": "Heartbeat Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [260, 300],
+      "webhookId": "dropbox-heartbeat"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dropbox-alert",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "alert-webhook",
+      "name": "Alert Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [260, 520],
+      "webhookId": "dropbox-alert"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dropbox-loot",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "loot-webhook",
+      "name": "Loot Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [260, 740],
+      "webhookId": "dropbox-loot"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "YOUR_DISCORD_WEBHOOK_URL",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"embeds\": [{\n    \"title\": \"🖨️ Phantom Printer - Heartbeat\",\n    \"color\": 3066993,\n    \"fields\": [\n      {\n        \"name\": \"Dropbox ID\",\n        \"value\": \"{{ $json.body.dropbox_id || 'Unknown' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"IP Address\",\n        \"value\": \"{{ $json.body.ip_address || 'Unknown' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"Hostname\",\n        \"value\": \"{{ $json.body.hostname || 'Unknown' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"MAC Address\",\n        \"value\": \"{{ $json.body.mac_address || 'Unknown' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"Uptime\",\n        \"value\": \"{{ $json.body.uptime || 'Unknown' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"Load\",\n        \"value\": \"{{ $json.body.load || 'Unknown' }}\",\n        \"inline\": true\n      }\n    ],\n    \"timestamp\": \"{{ $now.toISO() }}\",\n    \"footer\": {\n      \"text\": \"Phantom Printer V2\"\n    }\n  }]\n}",
+        "options": {}
+      },
+      "id": "heartbeat-discord",
+      "name": "Discord Heartbeat",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "YOUR_DISCORD_WEBHOOK_URL",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"embeds\": [{\n    \"title\": \"🚨 Phantom Printer - Alert\",\n    \"color\": {{ $json.body.level === 'critical' ? 15158332 : ($json.body.level === 'warning' ? 15105570 : 3447003) }},\n    \"fields\": [\n      {\n        \"name\": \"Alert Type\",\n        \"value\": \"{{ $json.body.type || 'Unknown' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"Level\",\n        \"value\": \"{{ $json.body.level || 'info' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"Dropbox ID\",\n        \"value\": \"{{ $json.body.dropbox_id || 'Unknown' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"Message\",\n        \"value\": \"{{ $json.body.message || 'No message' }}\",\n        \"inline\": false\n      }\n    ],\n    \"timestamp\": \"{{ $now.toISO() }}\",\n    \"footer\": {\n      \"text\": \"Phantom Printer V2\"\n    }\n  }]\n}",
+        "options": {}
+      },
+      "id": "alert-discord",
+      "name": "Discord Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 520]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "YOUR_DISCORD_WEBHOOK_URL",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"embeds\": [{\n    \"title\": \"💰 Phantom Printer - Loot Captured!\",\n    \"color\": 15844367,\n    \"fields\": [\n      {\n        \"name\": \"Loot Type\",\n        \"value\": \"{{ $json.body.type || 'Unknown' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"Dropbox ID\",\n        \"value\": \"{{ $json.body.dropbox_id || 'Unknown' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"Source\",\n        \"value\": \"{{ $json.body.source || 'Unknown' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"Data Preview\",\n        \"value\": \"```{{ ($json.body.data || 'No data').substring(0, 500) }}```\",\n        \"inline\": false\n      }\n    ],\n    \"timestamp\": \"{{ $now.toISO() }}\",\n    \"footer\": {\n      \"text\": \"Phantom Printer V2\"\n    }\n  }]\n}",
+        "options": {}
+      },
+      "id": "loot-discord",
+      "name": "Discord Loot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 740]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"status\": \"ok\", \"message\": \"Heartbeat received\", \"timestamp\": \"{{ $now.toISO() }}\"}"
+      },
+      "id": "heartbeat-response",
+      "name": "Heartbeat Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"status\": \"ok\", \"message\": \"Alert received\", \"timestamp\": \"{{ $now.toISO() }}\"}"
+      },
+      "id": "alert-response",
+      "name": "Alert Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [700, 520]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"status\": \"ok\", \"message\": \"Loot received\", \"timestamp\": \"{{ $now.toISO() }}\"}"
+      },
+      "id": "loot-response",
+      "name": "Loot Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [700, 740]
+    }
+  ],
+  "connections": {
+    "Heartbeat Webhook": {
+      "main": [
+        [
+          {
+            "node": "Discord Heartbeat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert Webhook": {
+      "main": [
+        [
+          {
+            "node": "Discord Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loot Webhook": {
+      "main": [
+        [
+          {
+            "node": "Discord Loot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discord Heartbeat": {
+      "main": [
+        [
+          {
+            "node": "Heartbeat Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discord Alert": {
+      "main": [
+        [
+          {
+            "node": "Alert Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discord Loot": {
+      "main": [
+        [
+          {
+            "node": "Loot Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 3,
+  "pinData": {}
+}
