@@ -408,6 +408,37 @@ pi
 
 ---
 
+## ⚠️ Files You MUST Edit Before Deployment
+
+These files contain placeholder values that you **must** replace with your own:
+
+### 1. `config/dropbox.conf`
+
+```bash
+nano ~/dropbox-v2/config/dropbox.conf
+```
+
+| Placeholder | Replace With | Example |
+|-------------|--------------|---------|
+| `YOUR_VPS_IP` | Your C2 VPS IP address | `143.198.45.123` |
+| `https://your-n8n-instance.com` | Your n8n webhook URL | `https://n8n.yourdomain.com` |
+
+### 2. `n8n/workflows/phantom-printer-workflow.json`
+
+Before importing to n8n, edit the file and replace:
+
+| Placeholder | Replace With | Example |
+|-------------|--------------|---------|
+| `YOUR_DISCORD_WEBHOOK_URL` | Your Discord webhook URL | `https://discord.com/api/webhooks/123.../abc...` |
+
+**To get a Discord webhook:**
+1. Go to your Discord server
+2. Right-click a channel → Edit Channel
+3. Integrations → Webhooks → New Webhook
+4. Copy the webhook URL
+
+---
+
 ## Configuration Reference
 
 Edit `~/dropbox-v2/config/dropbox.conf`:
@@ -418,13 +449,13 @@ DROPBOX_ID="phantom-001"
 HP_HOSTNAME="HPLJ-M428fdw"
 
 # C2 Server
-C2_PRIMARY_HOST="YOUR_VPS_IP"
+C2_PRIMARY_HOST="YOUR_VPS_IP"          # <-- CHANGE THIS
 C2_PRIMARY_PORT="22"
 C2_PRIMARY_USER="dropbox"
 C2_TUNNEL_PORT="2222"
 
 # n8n Webhooks
-N8N_WEBHOOK_URL="https://your-n8n-instance.com"
+N8N_WEBHOOK_URL="https://your-n8n-instance.com"  # <-- CHANGE THIS
 
 # Beacon timing
 BEACON_INTERVAL="60"
