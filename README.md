@@ -10,6 +10,8 @@ A physical penetration testing device built on Raspberry Pi 5 that disguises its
 
 ---
 
+<img width="1024" height="434" alt="image" src="https://github.com/user-attachments/assets/847afe32-78bd-4126-8e8f-0269d62835c2" />
+
 ## Features
 
 | Feature | Description |
