@@ -72,8 +72,8 @@ A physical penetration testing device built on Raspberry Pi 5 that disguises its
                                     │                 │
                          ┌──────────▼──────────┐      │
                          │    n8n Server       │   ┌──┴───────────┐
-                         │   (Hostinger)       │   │ 📱 Mobile App │
-                         │   Webhooks/Alerts   │   │ Flutter iOS   │
+                         │   (Hostinger)       │   │ 📱Mobile App │
+                         │   Webhooks/Alerts   │   │ Flutter iOS  │
                          └──────────┬──────────┘   └──────────────┘
                                     │
                                     ▼
