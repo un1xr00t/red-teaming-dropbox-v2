@@ -12,6 +12,19 @@ A physical penetration testing device built on Raspberry Pi 5 that disguises its
 
 <img width="1024" height="434" alt="image" src="https://github.com/user-attachments/assets/847afe32-78bd-4126-8e8f-0269d62835c2" />
 
+---
+
+## 🔗 Phantom Printer Ecosystem
+
+| Component | Description | Repository |
+|-----------|-------------|------------|
+| 🖨️ **Dropbox Hardware** | Raspberry Pi 5 + Kali Linux setup, HP printer disguise, recon modules | This repo |
+| 🔄 **n8n Automation** | Discord alerts, heartbeat monitoring, loot processing workflows | This repo |
+| 🌐 **C2 Infrastructure** | VPS setup, SSH tunnels, reverse shell access | This repo |
+| 📱 **Mobile Dashboard** | iOS app for remote C2, command execution, loot browsing | [phantom-dashboard](https://github.com/un1xr00t/phantom-dashboard) |
+
+---
+
 ## Features
 
 | Feature | Description |
@@ -23,6 +36,7 @@ A physical penetration testing device built on Raspberry Pi 5 that disguises its
 | 💀 **Self-Destruct** | 4 levels of destruction (quick, standard, full, nuclear) with dead man's switch |
 | 📤 **Data Exfiltration** | Automated loot collection and exfil via webhooks |
 | 🚀 **Zero-Touch Boot** | Auto-login, auto-connect, auto-stealth - just power on and walk away |
+| 📱 **Mobile Control** | iOS app for remote command execution and monitoring ([phantom-dashboard](https://github.com/un1xr00t/phantom-dashboard)) |
 
 ---
 
@@ -43,25 +57,30 @@ A physical penetration testing device built on Raspberry Pi 5 that disguises its
 │  Auto-Login | Self-Destruct | Dead Man's Switch | Kill Switch           │
 └─────────────────────────────────────────────────────────────────────────┘
                                     │
+                                    │ SSH Tunnel (Port 2222)
                                     ▼
-                         ┌─────────────────┐
-                         │  C2 VPS         │
-                         │  (Linode/DO)    │
-                         │  SSH Tunnel     │
-                         └────────┬────────┘
-                                  │
-                                  ▼
-                         ┌─────────────────┐
-                         │  n8n Server     │
-                         │  (Hostinger)    │
-                         │  Webhooks       │
-                         └────────┬────────┘
-                                  │
-                                  ▼
-                         ┌─────────────────┐
-                         │  Discord/Slack  │
-                         │  Alerts         │
-                         └─────────────────┘
+                         ┌─────────────────────┐
+                         │     C2 VPS          │
+                         │   (Linode/DO)       │
+                         │                     │
+                         │  ┌───────────────┐  │
+                         │  │ C2 API :8443  │◄─┼──────┐
+                         │  │ (FastAPI)     │  │      │
+                         │  └───────────────┘  │      │
+                         └──────────┬──────────┘      │
+                                    │                 │ HTTPS
+                                    │                 │
+                         ┌──────────▼──────────┐      │
+                         │    n8n Server       │   ┌──┴───────────┐
+                         │   (Hostinger)       │   │ 📱 Mobile App │
+                         │   Webhooks/Alerts   │   │ Flutter iOS   │
+                         └──────────┬──────────┘   └──────────────┘
+                                    │
+                                    ▼
+                         ┌─────────────────────┐
+                         │   Discord/Slack     │
+                         │   Notifications     │
+                         └─────────────────────┘
 ```
 
 ---
@@ -261,6 +280,47 @@ This will:
 
 ---
 
+## 📱 Mobile Dashboard (Optional)
+
+Want to control your dropbox from your phone? The **[Phantom Dashboard](https://github.com/un1xr00t/phantom-dashboard)** iOS app provides:
+
+- 📊 Real-time dropbox status and metrics
+- 🖥️ Execute shell commands remotely
+- 🔐 Browse captured credentials and hashes
+- 🗺️ View discovered hosts
+- ⚡ Quick action buttons for common tasks
+
+### Mobile App Setup
+
+The app requires a C2 API server running on your VPS:
+
+```bash
+# On your VPS
+cd /opt
+mkdir phantom-c2 && cd phantom-c2
+
+# Download C2 API
+wget https://raw.githubusercontent.com/un1xr00t/phantom-dashboard/main/server/c2_api.py
+wget https://raw.githubusercontent.com/un1xr00t/phantom-dashboard/main/server/setup.sh
+
+# Run setup
+chmod +x setup.sh
+./setup.sh
+```
+
+The setup script will:
+- Install Python dependencies
+- Generate SSL certificates
+- Create API key (save this!)
+- Set up systemd service
+- Configure firewall
+
+Then configure the Flutter app with your VPS IP and API key.
+
+👉 **[Full mobile setup instructions →](https://github.com/un1xr00t/phantom-dashboard)**
+
+---
+
 ## Directory Structure
 
 ```
@@ -384,6 +444,55 @@ sudo ~/dropbox-v2/modules/opsec/opsec.sh nuclear    # Brick the device
 
 ---
 
+## n8n Webhook Setup
+
+The n8n integration provides real-time notifications and automation for your dropbox operations.
+
+### Webhook Endpoints
+
+| Endpoint | Purpose | Trigger |
+|----------|---------|---------|
+| `/webhook/dropbox-heartbeat` | System status updates | Every 60s (configurable) |
+| `/webhook/dropbox-alert` | Critical alerts | Online/offline, new creds, errors |
+| `/webhook/dropbox-loot` | Exfiltrated data | Manual or on capture |
+
+### Discord Notification Types
+
+| Alert Type | Color | Description |
+|------------|-------|-------------|
+| 🟢 **online** | Green | Dropbox came online |
+| 🔴 **offline** | Red | Dropbox went offline |
+| 🟡 **new_creds** | Yellow | Credentials captured |
+| 🟠 **warning** | Orange | Non-critical issue |
+| 🔴 **critical** | Red | Immediate attention needed |
+
+### Setting Up n8n
+
+1. **Get n8n running** (self-hosted or [n8n.cloud](https://n8n.cloud))
+
+2. **Create Discord webhook:**
+   - Discord Server → Channel Settings → Integrations → Webhooks
+   - Create webhook, copy URL
+
+3. **Import workflow:**
+   - Open n8n → Workflows → Import
+   - Select `n8n/workflows/phantom-printer-workflow.json`
+   - Update `YOUR_DISCORD_WEBHOOK_URL` placeholder
+
+4. **Set environment variable** (recommended):
+   ```bash
+   # In n8n settings or docker-compose
+   DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+   ```
+
+5. **Activate workflow** and test:
+   ```bash
+   # From your Pi
+   ~/dropbox-v2/modules/c2/c2.sh heartbeat
+   ```
+
+---
+
 ## Remote Access
 
 Once deployed, access your dropbox through the VPS:
@@ -397,16 +506,6 @@ echo "alias pi='ssh -p 2222 -i ~/.ssh/id_dropbox_access kali@localhost'" >> ~/.b
 source ~/.bashrc
 pi
 ```
-
----
-
-## n8n Webhook Endpoints
-
-| Endpoint | Purpose |
-|----------|---------|
-| `/webhook/dropbox-heartbeat` | Receive heartbeat with system info |
-| `/webhook/dropbox-alert` | Receive alerts (online, offline, new creds, etc.) |
-| `/webhook/dropbox-loot` | Receive exfiltrated data |
 
 ---
 
@@ -480,6 +579,7 @@ DEADMAN_HOURS="24"
 - [ ] All services start on boot
 - [ ] Auto-login is configured
 - [ ] `arm.sh` has been run
+- [ ] (Optional) Mobile app configured
 
 ### During Engagement
 
@@ -487,6 +587,7 @@ DEADMAN_HOURS="24"
 - Access via VPS reverse tunnel only
 - Run recon from the dropbox, not your machine
 - Exfil loot regularly
+- Use mobile app for quick checks (if configured)
 
 ### Extraction
 
@@ -539,6 +640,19 @@ sudo systemctl status avahi-daemon
 sudo bash -x ~/dropbox-v2/modules/stealth/stealth.sh enable
 ```
 
+### Mobile App Can't Connect
+
+```bash
+# On VPS - check C2 API status
+sudo systemctl status phantom-c2
+
+# Check API is responding
+curl -sk https://localhost:8443/api/health
+
+# Check firewall
+sudo ufw status | grep 8443
+```
+
 ---
 
 ## Legal Disclaimer
@@ -583,6 +697,12 @@ MIT License - See [LICENSE](LICENSE)
 ---
 
 ## Changelog
+
+### v2.1.0 - Mobile Command Center
+- Added [Phantom Dashboard](https://github.com/un1xr00t/phantom-dashboard) iOS app
+- Added C2 API server (`c2_api.py`) for mobile connectivity
+- Updated architecture to support app ↔ dropbox communication
+- Enhanced documentation for full ecosystem setup
 
 ### v2.0.0 - Phantom Printer
 - Complete rewrite from V1
